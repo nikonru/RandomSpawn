@@ -87,16 +87,13 @@ public class RandomSpawn {
     // 获取安全的传送位置
     private static BlockPos getSafePosition(Level world, int x, int z) {
 
-
-        BlockPos currentPos = new BlockPos(x, 256, z);
+        BlockPos currentPos = new BlockPos(x, 0, z);
         world.getChunkAt(currentPos);
         BlockPos hmPos = world.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, currentPos);
 
-        for (int y = hmPos.getY()-1; y < world.getMaxBuildHeight(); y++) {
-
-            BlockPos pos = new BlockPos(x, y, z);
-            BlockPos PosPlus = new BlockPos(x, y + 1, z);  // 上方一格的位置
-            BlockPos PosPlusPlus = new BlockPos(x, y + 2, z);
+            BlockPos pos = new BlockPos(x, hmPos.getY(), z);
+            BlockPos PosPlus = new BlockPos(x, hmPos.getY()+1, z);  // 上方一格的位置
+            BlockPos PosPlusPlus = new BlockPos(x, hmPos.getY()+2, z);
 
             AtomicReference<String> biomeIdRef = new AtomicReference<>(null);
 
@@ -120,9 +117,10 @@ public class RandomSpawn {
                if (!world.getBlockState(pos).isAir() && goodBlock
                  && world.getBlockState(PosPlus).isAir()
                  && world.getBlockState(PosPlusPlus).isAir())
-                 {return pos;}
+                 {
+                     return PosPlus;}
                }
-        }
+
         // 如果没有找到合适的方块，返回null
         return null;
     }
