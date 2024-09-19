@@ -9,6 +9,7 @@ import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -85,7 +86,13 @@ public class RandomSpawn {
 
     // 获取安全的传送位置
     private static BlockPos getSafePosition(Level world, int x, int z) {
-        for (int y = world.getSeaLevel(); y < world.getMaxBuildHeight(); y++) {
+
+
+        BlockPos currentPos = new BlockPos(x, 256, z);
+        world.getChunkAt(currentPos);
+        BlockPos hmPos = world.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, currentPos);
+
+        for (int y = hmPos.getY()-1; y < world.getMaxBuildHeight(); y++) {
 
             BlockPos pos = new BlockPos(x, y, z);
             BlockPos PosPlus = new BlockPos(x, y + 1, z);  // 上方一格的位置
