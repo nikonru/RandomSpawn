@@ -14,6 +14,7 @@ public class RandomSpawnConfig
     public static ForgeConfigSpec.IntValue MaxDistance;
     public static ForgeConfigSpec.IntValue MaxTries;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> biomeBlacklist;
+    public static ForgeConfigSpec.ConfigValue<List<? extends String>> blockBlacklist;
 
     static
     {
@@ -25,8 +26,12 @@ public class RandomSpawnConfig
                 .comment("Max RTP Tries")
                 .defineInRange("MaxTries", 5, 1, 20);
         biomeBlacklist = BUILDER
-                .comment("UNUSED: Biome Blacklist")
-                .defineList("biome Blacklist", List.of("minecraft:ocean"),
+                .comment("Biome Blacklist")
+                .defineList("biome Blacklist", List.of("mod1:biome2","mod3:biome4"),
+                        element -> element instanceof String);
+        blockBlacklist = BUILDER
+                .comment("Block Blacklist")
+                .defineList("block Blacklist", List.of("minecraft:magma_block","minecraft:cactus","minecraft:lava"),
                         element -> element instanceof String);
         SPEC = BUILDER.build();
     }
