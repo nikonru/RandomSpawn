@@ -81,6 +81,8 @@ public class RandomSpawn {
                     BlockPos teleportPos = getSafePosition(world, x, z);
 
                     if (teleportPos != null) {
+                        player.setRespawnPosition(world.dimension(), teleportPos, 0.0f, true, false);
+
                         player.teleportTo(teleportPos.getX() + 0.5, teleportPos.getY() + 1, teleportPos.getZ() + 0.5);
                         player.sendSystemMessage(Component.translatable("info.randomspawn.system.success"));
 
