@@ -46,8 +46,9 @@ public class RandomSpawn {
                 data = playerData.getCompound(Player.PERSISTED_NBT_TAG);
             }
 
-            if (!data.getBoolean("randomspawn:old")) {
-                RandomSpawnConfig.load();
+            RandomSpawnConfig.load();
+
+            if (!data.getBoolean("randomspawn:old") || RandomSpawnConfig.RandomSpawnOnEachLogin) {
                 int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
 
                 Random random = new Random();
