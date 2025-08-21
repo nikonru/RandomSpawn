@@ -24,15 +24,15 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RandomSpawn {
 
     public RandomSpawn() {
-        RandomSpawnConfig.setup();
+        RandomSpawnConfig.load();
         MinecraftForge.EVENT_BUS.register(this);
     }
 
       @SubscribeEvent(priority = EventPriority.HIGHEST)
       public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
 
-        int RANGE = RandomSpawnConfig.MaxDistance.get();
-        int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries.get();
+        int RANGE = RandomSpawnConfig.MaxDistance;
+        int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
 
         if (event.getEntity() instanceof ServerPlayer player) {
             Level world = player.level();
@@ -98,7 +98,7 @@ public class RandomSpawn {
             String biomeId = biomeIdRef.get();
             boolean goodBiome = false;
             if (biomeId != null)
-               goodBiome = !RandomSpawnConfig.biomeBlacklist.get().contains(biomeId);
+               goodBiome = !RandomSpawnConfig.biomeBlacklist.contains(biomeId);
 
             if (world.getWorldBorder().isWithinBounds(pos) && goodBiome
              && !world.getBiome(pos).is(BiomeTags.IS_OCEAN)
@@ -106,8 +106,8 @@ public class RandomSpawn {
                {
                    Block block = world.getBlockState(pos).getBlock();
                    String blockId = ForgeRegistries.BLOCKS.getKey(block).toString();
-                   boolean goodBlock = !RandomSpawnConfig.blockBlacklist.get().contains(blockId);
-                   
+                   boolean goodBlock = !RandomSpawnConfig.blockBlacklist.contains(blockId);
+
                // ensuring there is enough space above
                if (!world.getBlockState(pos).isAir() && goodBlock
                  && world.getBlockState(PosPlus).isAir()
