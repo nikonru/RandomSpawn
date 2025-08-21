@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RandomSpawnConfig {
-
-    public static int MaxDistance = 500;
-    public static int MaxTries = 5;
+    public static int MaxTries = 10;
     public static List<String> biomeBlacklist = List.of("mod1:biome2", "mod3:biome4");
     public static List<String> blockBlacklist = List.of("minecraft:magma_block", "minecraft:cactus", "minecraft:lava");
 
@@ -49,7 +47,6 @@ public class RandomSpawnConfig {
 
                 config.load();
 
-                MaxDistance = config.getOrElse("Config.MaxDistance", MaxDistance);
                 MaxTries = config.getOrElse("Config.MaxTries", MaxTries);
                 biomeBlacklist = config.getOrElse("Config.biome Blacklist", biomeBlacklist);
                 blockBlacklist = config.getOrElse("Config.block Blacklist", blockBlacklist);
@@ -92,7 +89,6 @@ public class RandomSpawnConfig {
                     .writingMode(WritingMode.REPLACE)
                     .build()) {
 
-                config.set("Config.MaxDistance", MaxDistance);
                 config.set("Config.MaxTries", MaxTries);
                 config.set("Config.biome Blacklist", new ArrayList<>(biomeBlacklist));
                 config.set("Config.block Blacklist", new ArrayList<>(blockBlacklist));

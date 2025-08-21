@@ -1,6 +1,8 @@
 package com.rinko1231.randomspawn;
 
 import com.rinko1231.randomspawn.config.RandomSpawnConfig;
+import com.rinko1231.randomspawn.config.RandomSpawnConfig.AreaConfig;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -19,20 +21,18 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.checkerframework.checker.units.qual.Area;
+
 
 @Mod("randomspawn")
 public class RandomSpawn {
 
     public RandomSpawn() {
-        RandomSpawnConfig.load();
         MinecraftForge.EVENT_BUS.register(this);
     }
 
       @SubscribeEvent(priority = EventPriority.HIGHEST)
       public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-
-        int RANGE = RandomSpawnConfig.MaxDistance;
-        int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
 
         if (event.getEntity() instanceof ServerPlayer player) {
             Level world = player.level();
@@ -47,19 +47,35 @@ public class RandomSpawn {
             }
 
             if (!data.getBoolean("randomspawn:old")) {
-
-                playerData.put(Player.PERSISTED_NBT_TAG, data);
-
-                BlockPos spawnPos = player.getRespawnPosition();
-                if (spawnPos == null) {
-                    spawnPos = world.getSharedSpawnPos();
-                }
+                RandomSpawnConfig.load();
+                int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
 
                 Random random = new Random();
+                AreaConfig AREA = RandomSpawnConfig.areas.get(random.nextInt(RandomSpawnConfig.areas.size()));
+                int RADIUS = AREA.radius;
+ 
+                playerData.put(Player.PERSISTED_NBT_TAG, data);
+
                 for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
                 {
-                    int x = spawnPos.getX() + random.nextInt(RANGE * 2) - RANGE;
-                    int z = spawnPos.getZ() + random.nextInt(RANGE * 2) - RANGE;
+                    int x = AREA.x + random.nextInt(RADIUS * 2) - RADIUS;
+                    int z = AREA.z + random.nextInt(RADIUS * 2) - RADIUS;
+
+                    if (AREA.shape == "square"){
+                        x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
+                        z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
+                    }
+                    else if(AREA.shape == "circle"){
+                        double angle = random.nextDouble() * 2 * Math.PI; 
+                        int radius = random.nextInt(RADIUS);
+                        x = AREA.x + (int)(radius * Math.cos(angle));
+                        z = AREA.z + (int)(radius * Math.sin(angle));
+                    }
+                    else{
+                        System.err.println(String.format("Warning: unknown area shape: '%s' using square shape instead", AREA.shape));
+                        x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
+                        z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
+                    }
 
                     BlockPos teleportPos = getSafePosition(world, x, z);
 
@@ -78,6 +94,13 @@ public class RandomSpawn {
         }
     }
 
+    private static int randomNegation(Random random){
+        if (random.nextInt(2) == 0) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
 
     private static BlockPos getSafePosition(Level world, int x, int z) {
 
