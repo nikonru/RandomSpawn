@@ -11,6 +11,9 @@ public class Network {
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(CHANNEL_ID, ()->PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
     
     public static void register() {
-        CHANNEL.registerMessage(0, OpenGuiPacket.class, OpenGuiPacket::encode, OpenGuiPacket::decode, OpenGuiPacket::handle);
+        int id = 0;
+
+        CHANNEL.registerMessage(id++, OpenGuiPacket.class, OpenGuiPacket::encode, OpenGuiPacket::decode, OpenGuiPacket::handle);
+        CHANNEL.registerMessage(id++, SelectAreaPacket.class, SelectAreaPacket::encode, SelectAreaPacket::decode, SelectAreaPacket::handle);
     }
 }

@@ -4,6 +4,6 @@ import net.minecraft.client.Minecraft;
 
 public class ClientPacketHandlers {
     public static void handleOpenGui(OpenGuiPacket msg) {
-        Minecraft.getInstance().setScreen(new AreaSelectionScreen());
+        Minecraft.getInstance().setScreen(new AreaSelectionScreen(msg.areas));
     }
 }

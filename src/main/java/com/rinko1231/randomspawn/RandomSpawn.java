@@ -1,5 +1,7 @@
 package com.rinko1231.randomspawn;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -29,74 +31,80 @@ public class RandomSpawn {
     public RandomSpawn() {
         MinecraftForge.EVENT_BUS.register(this);
         Network.register();
+        RandomSpawnConfig.load();
     }
 
-      @SubscribeEvent(priority = EventPriority.HIGHEST)
-      public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            List<String> areas = new ArrayList<>();
 
-            Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket());
-
-            Level world = player.level();
-
-            CompoundTag playerData = player.getPersistentData();
-            CompoundTag data;
-            if (!playerData.contains(Player.PERSISTED_NBT_TAG)) {
-                data = new CompoundTag();
+            for (int i = 0; i < RandomSpawnConfig.areas.size(); i++) {
+                AreaConfig area = RandomSpawnConfig.areas.get(i);
+                areas.add(area.name);
             }
-            else {
-                data = playerData.getCompound(Player.PERSISTED_NBT_TAG);
-            }
+            Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket(areas));
+        }
+    }
 
-            RandomSpawnConfig.load();
+    public static void setRandomSpawn(ServerPlayer player, int areaId){
+        Level world = player.level();
 
-            if (!data.getBoolean("randomspawn:old") || RandomSpawnConfig.RandomSpawnOnEachLogin) {
-                int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
+        CompoundTag playerData = player.getPersistentData();
+        CompoundTag data;
+        if (!playerData.contains(Player.PERSISTED_NBT_TAG)) {
+            data = new CompoundTag();
+        }
+        else {
+            data = playerData.getCompound(Player.PERSISTED_NBT_TAG);
+        }
 
-                Random random = new Random();
-                AreaConfig AREA = RandomSpawnConfig.areas.get(random.nextInt(RandomSpawnConfig.areas.size()));
-                int RADIUS = AREA.radius;
- 
-                playerData.put(Player.PERSISTED_NBT_TAG, data);
+        if (!data.getBoolean("randomspawn:old") || RandomSpawnConfig.RandomSpawnOnEachLogin) {
+            int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
 
-                for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
-                {
-                    int x = AREA.x + random.nextInt(RADIUS * 2) - RADIUS;
-                    int z = AREA.z + random.nextInt(RADIUS * 2) - RADIUS;
+            Random random = new Random();
+            //AreaConfig AREA = RandomSpawnConfig.areas.get(random.nextInt(RandomSpawnConfig.areas.size()));
+            AreaConfig AREA = RandomSpawnConfig.areas.get(areaId);
+            int RADIUS = AREA.radius;
 
-                    if (AREA.shape == "square"){
-                        x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
-                        z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
-                    }
-                    else if(AREA.shape == "circle"){
-                        double angle = random.nextDouble() * 2 * Math.PI; 
-                        int radius = random.nextInt(RADIUS);
-                        x = AREA.x + (int)(radius * Math.cos(angle));
-                        z = AREA.z + (int)(radius * Math.sin(angle));
-                    }
-                    else{
-                        System.err.println(String.format("Warning: unknown area shape: '%s' using square shape instead", AREA.shape));
-                        x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
-                        z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
-                    }
-                    //TODO: exclude failed positions
-                    BlockPos teleportPos = getSafePosition(world, x, z);
+            playerData.put(Player.PERSISTED_NBT_TAG, data);
 
-                    if (teleportPos != null) {
-                        player.setRespawnPosition(world.dimension(), teleportPos, 0.0f, true, false);
+            for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
+            {
+                int x = AREA.x + random.nextInt(RADIUS * 2) - RADIUS;
+                int z = AREA.z + random.nextInt(RADIUS * 2) - RADIUS;
 
-                        player.teleportTo(teleportPos.getX() + 0.5, teleportPos.getY() + 1, teleportPos.getZ() + 0.5);
-                        player.sendSystemMessage(Component.translatable("info.randomspawn.system.success"));
-
-                        data.putBoolean("randomspawn:old", true);
-                        return;
-                        }
+                if ("square".equals(AREA.shape)) {
+                    x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
+                    z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
                 }
+                else if("circle".equals(AREA.shape)) {
+                    double angle = random.nextDouble() * 2 * Math.PI; 
+                    int radius = random.nextInt(RADIUS);
+                    x = AREA.x + (int)(radius * Math.cos(angle));
+                    z = AREA.z + (int)(radius * Math.sin(angle));
+                }
+                else {
+                    System.err.println(String.format("Warning: unknown area shape: '%s' using square shape instead", AREA.shape));
+                    x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
+                    z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
+                }
+                //TODO: exclude failed positions
+                BlockPos teleportPos = getSafePosition(world, x, z);
 
-                player.sendSystemMessage(Component.translatable("info.randomspawn.system.failed"));
-                data.putBoolean("randomspawn:old", true);
+                if (teleportPos != null) {
+                    player.setRespawnPosition(world.dimension(), teleportPos, 0.0f, true, false);
+
+                    player.teleportTo(teleportPos.getX() + 0.5, teleportPos.getY() + 1, teleportPos.getZ() + 0.5);
+                    player.sendSystemMessage(Component.translatable("info.randomspawn.system.success"));
+
+                    data.putBoolean("randomspawn:old", true);
+                    return;
+                    }
             }
+
+            player.sendSystemMessage(Component.translatable("info.randomspawn.system.failed"));
+            data.putBoolean("randomspawn:old", true);
         }
     }
 
