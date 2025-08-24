@@ -8,12 +8,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.rinko1231.randomspawn.config.RandomSpawnConfig;
 import com.rinko1231.randomspawn.config.RandomSpawnConfig.AreaConfig;
 
+import net.minecraft.client.telemetry.TelemetryProperty.GameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -37,17 +39,21 @@ public class RandomSpawn {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            List<String> areas = new ArrayList<>();
+            int gameTypeId = getPlayerGameType(player).getId();
+            player.setGameMode(GameType.SPECTATOR); // Making player non-existent to the world until his decision about spawn area
 
+            List<String> areas = new ArrayList<>();
             for (int i = 0; i < RandomSpawnConfig.areas.size(); i++) {
                 AreaConfig area = RandomSpawnConfig.areas.get(i);
                 areas.add(area.name);
             }
-            Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket(areas));
+
+            Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket(areas, gameTypeId));
         }
     }
 
-    public static void setRandomSpawn(ServerPlayer player, int areaId){
+    public static void setRandomSpawn(ServerPlayer player, int areaId, int gameTypeId){
+        GameType gameType = GameType.byId(gameTypeId);
         Level world = player.level();
 
         CompoundTag playerData = player.getPersistentData();
@@ -99,6 +105,7 @@ public class RandomSpawn {
                     player.sendSystemMessage(Component.translatable("info.randomspawn.system.success"));
 
                     data.putBoolean("randomspawn:old", true);
+                    player.setGameMode(gameType);
                     return;
                     }
             }
@@ -106,6 +113,14 @@ public class RandomSpawn {
             player.sendSystemMessage(Component.translatable("info.randomspawn.system.failed"));
             data.putBoolean("randomspawn:old", true);
         }
+        player.setGameMode(gameType);
+    }
+
+    private static GameType getPlayerGameType(ServerPlayer player){
+        if(player.isCreative()) {
+            return GameType.CREATIVE;
+        }
+        return GameType.SURVIVAL;
     }
 
     private static int randomNegation(Random random){

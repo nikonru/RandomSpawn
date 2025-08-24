@@ -15,11 +15,13 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 
 public class AreaSelectionScreen extends Screen {
     private final List<String> areas;
+    private final int gameTypeId;
     private AreaScrollPanel scrollPanel;
 
-    public AreaSelectionScreen(List<String> areas) {
+    public AreaSelectionScreen(List<String> areas, int gameTypeId) {
         super(Component.translatable("info.randomspawn.gui.choose_spawn"));
         this.areas = new ArrayList<>(areas);
+        this.gameTypeId = gameTypeId;
     }
 
     @Override
@@ -29,7 +31,7 @@ public class AreaSelectionScreen extends Screen {
         int left = this.width / 2 - 100;
         int right = this.width / 2 + 100;
 
-        scrollPanel = new AreaScrollPanel(minecraft, right - left, bottom - top, top, left, areas);
+        scrollPanel = new AreaScrollPanel(minecraft, right - left, bottom - top, top, left, areas, gameTypeId);
         addRenderableWidget(scrollPanel);
     }
 
@@ -48,12 +50,14 @@ public class AreaSelectionScreen extends Screen {
     private static class AreaScrollPanel extends ScrollPanel {
         private final List<Button> buttons = new ArrayList<>();
         private final List<String> areas;
+        private final int gameTypeId;
         private final Minecraft minecraft;
 
-        public AreaScrollPanel(Minecraft mc, int width, int height, int top, int left, List<String> areas) {
+        public AreaScrollPanel(Minecraft mc, int width, int height, int top, int left, List<String> areas, int gameTypeId) {
             super(mc, width, height, top, left);
             this.minecraft = mc;
             this.areas = areas;
+            this.gameTypeId = gameTypeId;
 
             int y = 0;
             for (int i = 0; i < areas.size(); i++) {
@@ -103,7 +107,7 @@ public class AreaSelectionScreen extends Screen {
         }
 
         private void selectZone(int areaId) {
-            Network.CHANNEL.sendToServer(new SelectAreaPacket(areaId));
+            Network.CHANNEL.sendToServer(new SelectAreaPacket(areaId, gameTypeId));
 
             this.minecraft.setScreen(null);
         }
