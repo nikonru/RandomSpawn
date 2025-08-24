@@ -1,5 +1,8 @@
 package com.rinko1231.randomspawn;
 
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.rinko1231.randomspawn.config.RandomSpawnConfig;
 import com.rinko1231.randomspawn.config.RandomSpawnConfig.AreaConfig;
 
@@ -17,24 +20,24 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.checkerframework.checker.units.qual.Area;
-
 
 @Mod("randomspawn")
 public class RandomSpawn {
 
     public RandomSpawn() {
         MinecraftForge.EVENT_BUS.register(this);
+        Network.register();
     }
 
       @SubscribeEvent(priority = EventPriority.HIGHEST)
       public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
 
         if (event.getEntity() instanceof ServerPlayer player) {
+
+            Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket());
+
             Level world = player.level();
 
             CompoundTag playerData = player.getPersistentData();
@@ -77,7 +80,7 @@ public class RandomSpawn {
                         x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
                         z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
                     }
-
+                    //TODO: exclude failed positions
                     BlockPos teleportPos = getSafePosition(world, x, z);
 
                     if (teleportPos != null) {
