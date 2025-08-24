@@ -13,6 +13,7 @@ import com.rinko1231.randomspawn.network.OpenGuiPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.player.Player;
@@ -39,6 +40,10 @@ public class RandomSpawn {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        MinecraftServer server = event.getEntity().getServer();
+        if (server == null) return;
+        if (!server.isDedicatedServer()) return;
+
         if (event.getEntity() instanceof ServerPlayer player) {
             CompoundTag playerData = player.getPersistentData();
             CompoundTag data;
