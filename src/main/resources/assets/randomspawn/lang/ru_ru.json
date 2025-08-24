@@ -1,0 +1,5 @@
+{
+  "info.randomspawn.system.success": "Вы были телепортированы в случайное место, удачи!",
+  "info.randomspawn.system.failed": "Не удалось найти подходящее место, случайная телепортация отменена.",
+  "info.randomspawn.gui.choose_spawn": "Выберите зону возрождения"
+}

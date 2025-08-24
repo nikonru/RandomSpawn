@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RandomSpawnConfig {
-    public static int MaxTries = 10;
+    public static int MaxTries = 50;
     public static boolean RandomSpawnOnEachLogin = false;
+    public static boolean RandomSpawnArea = false;
     public static List<String> biomeBlacklist = List.of("mod1:biome2", "mod3:biome4");
     public static List<String> blockBlacklist = List.of("minecraft:magma_block", "minecraft:cactus", "minecraft:lava");
 
@@ -50,6 +51,7 @@ public class RandomSpawnConfig {
 
                 MaxTries = config.getOrElse("Config.MaxTries", MaxTries);
                 RandomSpawnOnEachLogin = config.getOrElse("Config.RandomSpawnOnEachLogin", RandomSpawnOnEachLogin);
+                RandomSpawnArea = config.getOrElse("Config.RandomSpawnArea", RandomSpawnArea);
                 biomeBlacklist = config.getOrElse("Config.biome Blacklist", biomeBlacklist);
                 blockBlacklist = config.getOrElse("Config.block Blacklist", blockBlacklist);
 
@@ -93,6 +95,7 @@ public class RandomSpawnConfig {
 
                 config.set("Config.MaxTries", MaxTries);
                 config.set("Config.RandomSpawnOnEachLogin", RandomSpawnOnEachLogin);
+                config.set("Config.RandomSpawnArea", RandomSpawnArea);
                 config.set("Config.biome Blacklist", new ArrayList<>(biomeBlacklist));
                 config.set("Config.block Blacklist", new ArrayList<>(blockBlacklist));
 

@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.rinko1231.randomspawn.config.RandomSpawnConfig;
 import com.rinko1231.randomspawn.config.RandomSpawnConfig.AreaConfig;
 
-import net.minecraft.client.telemetry.TelemetryProperty.GameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -39,16 +38,32 @@ public class RandomSpawn {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            int gameTypeId = getPlayerGameType(player).getId();
-            player.setGameMode(GameType.SPECTATOR); // Making player non-existent to the world until his decision about spawn area
-
-            List<String> areas = new ArrayList<>();
-            for (int i = 0; i < RandomSpawnConfig.areas.size(); i++) {
-                AreaConfig area = RandomSpawnConfig.areas.get(i);
-                areas.add(area.name);
+            CompoundTag playerData = player.getPersistentData();
+            CompoundTag data;
+            if (!playerData.contains(Player.PERSISTED_NBT_TAG)) {
+                data = new CompoundTag();
+                playerData.put(Player.PERSISTED_NBT_TAG, data);
+            } else {
+                data = playerData.getCompound(Player.PERSISTED_NBT_TAG);
             }
+            
+            if (!data.getBoolean("randomspawn:old") || RandomSpawnConfig.RandomSpawnOnEachLogin) {
+                int gameTypeId = getPlayerGameType(player).getId();
+                player.setGameMode(GameType.SPECTATOR); // Making player non-existent to the world until his decision about spawn area
 
-            Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket(areas, gameTypeId));
+                if (RandomSpawnConfig.RandomSpawnArea){
+                    Random random = new Random();
+                    setRandomSpawn(player, random.nextInt(RandomSpawnConfig.areas.size()), gameTypeId);
+                } else {
+                    List<String> areas = new ArrayList<>();
+                    for (int i = 0; i < RandomSpawnConfig.areas.size(); i++) {
+                        AreaConfig area = RandomSpawnConfig.areas.get(i);
+                        areas.add(area.name);
+                    }
+
+                    Network.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket(areas, gameTypeId));
+                }
+            }
         }
     }
 
@@ -56,67 +71,56 @@ public class RandomSpawn {
         GameType gameType = GameType.byId(gameTypeId);
         Level world = player.level();
 
-        CompoundTag playerData = player.getPersistentData();
-        CompoundTag data;
-        if (!playerData.contains(Player.PERSISTED_NBT_TAG)) {
-            data = new CompoundTag();
-        }
-        else {
-            data = playerData.getCompound(Player.PERSISTED_NBT_TAG);
-        }
+        CompoundTag data = player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
 
-        if (!data.getBoolean("randomspawn:old") || RandomSpawnConfig.RandomSpawnOnEachLogin) {
-            int MAX_ATTEMPTS = RandomSpawnConfig.MaxTries;
+        Random random = new Random();
+        AreaConfig AREA = RandomSpawnConfig.areas.get(areaId);
+        int RADIUS = AREA.radius;
 
-            Random random = new Random();
-            //AreaConfig AREA = RandomSpawnConfig.areas.get(random.nextInt(RandomSpawnConfig.areas.size()));
-            AreaConfig AREA = RandomSpawnConfig.areas.get(areaId);
-            int RADIUS = AREA.radius;
+        for (int attempt = 0; attempt < RandomSpawnConfig.MaxTries; attempt++)
+        {
+            int x = AREA.x + random.nextInt(RADIUS * 2) - RADIUS;
+            int z = AREA.z + random.nextInt(RADIUS * 2) - RADIUS;
 
-            playerData.put(Player.PERSISTED_NBT_TAG, data);
-
-            for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
-            {
-                int x = AREA.x + random.nextInt(RADIUS * 2) - RADIUS;
-                int z = AREA.z + random.nextInt(RADIUS * 2) - RADIUS;
-
-                if ("square".equals(AREA.shape)) {
-                    x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
-                    z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
-                }
-                else if("circle".equals(AREA.shape)) {
-                    double angle = random.nextDouble() * 2 * Math.PI; 
-                    int radius = random.nextInt(RADIUS);
-                    x = AREA.x + (int)(radius * Math.cos(angle));
-                    z = AREA.z + (int)(radius * Math.sin(angle));
-                }
-                else {
-                    System.err.println(String.format("Warning: unknown area shape: '%s' using square shape instead", AREA.shape));
-                    x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
-                    z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
-                }
-                //TODO: exclude failed positions
-                BlockPos teleportPos = getSafePosition(world, x, z);
-
-                if (teleportPos != null) {
-                    player.setRespawnPosition(world.dimension(), teleportPos, 0.0f, true, false);
-
-                    player.teleportTo(teleportPos.getX() + 0.5, teleportPos.getY() + 1, teleportPos.getZ() + 0.5);
-                    player.sendSystemMessage(Component.translatable("info.randomspawn.system.success"));
-
-                    data.putBoolean("randomspawn:old", true);
-                    player.setGameMode(gameType);
-                    return;
-                    }
+            if ("square".equals(AREA.shape)) {
+                x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
+                z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
+            }
+            else if("circle".equals(AREA.shape)) {
+                double angle = random.nextDouble() * 2 * Math.PI; 
+                int radius = random.nextInt(RADIUS);
+                x = AREA.x + (int)(radius * Math.cos(angle));
+                z = AREA.z + (int)(radius * Math.sin(angle));
+            }
+            else {
+                System.err.println(String.format("Warning: unknown area shape: '%s' using square shape instead", AREA.shape));
+                x = AREA.x + random.nextInt(RADIUS) * randomNegation(random);
+                z = AREA.z + random.nextInt(RADIUS) * randomNegation(random);
             }
 
-            player.sendSystemMessage(Component.translatable("info.randomspawn.system.failed"));
-            data.putBoolean("randomspawn:old", true);
+            BlockPos teleportPos = getSafePosition(world, x, z);
+            
+            // TODO: (possible optimization) exclude failed positions
+            if (teleportPos != null) {
+                player.setRespawnPosition(world.dimension(), teleportPos, 0.0f, true, false);
+
+                player.teleportTo(teleportPos.getX() + 0.5, teleportPos.getY() + 1, teleportPos.getZ() + 0.5);
+                player.sendSystemMessage(Component.translatable("info.randomspawn.system.success"));
+
+                data.putBoolean("randomspawn:old", true);
+                player.setGameMode(gameType);
+                return;
+            }
         }
+
+        player.sendSystemMessage(Component.translatable("info.randomspawn.system.failed"));
+        data.putBoolean("randomspawn:old", true);
+
         player.setGameMode(gameType);
     }
 
     private static GameType getPlayerGameType(ServerPlayer player){
+        // NOTE: so, basically we have excluded Adventure and Spectator modes as initial modes for players
         if(player.isCreative()) {
             return GameType.CREATIVE;
         }
