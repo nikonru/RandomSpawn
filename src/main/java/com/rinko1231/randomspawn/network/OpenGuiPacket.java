@@ -1,7 +1,6 @@
-package com.rinko1231.randomspawn;
+package com.rinko1231.randomspawn.network;
 
 import java.util.function.Supplier;
-
 import java.util.ArrayList;
 import java.util.List;
 

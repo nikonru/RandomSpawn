@@ -1,9 +1,11 @@
-package com.rinko1231.randomspawn;
+package com.rinko1231.randomspawn.gui;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.mojang.blaze3d.vertex.Tesselator;
+import com.rinko1231.randomspawn.network.Network;
+import com.rinko1231.randomspawn.network.SelectAreaPacket;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;

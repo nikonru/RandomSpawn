@@ -1,4 +1,6 @@
-package com.rinko1231.randomspawn;
+package com.rinko1231.randomspawn.network;
+
+import com.rinko1231.randomspawn.gui.AreaSelectionScreen;
 
 import net.minecraft.client.Minecraft;
 

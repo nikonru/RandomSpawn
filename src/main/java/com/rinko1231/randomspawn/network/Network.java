@@ -1,4 +1,4 @@
-package com.rinko1231.randomspawn;
+package com.rinko1231.randomspawn.network;
 
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;

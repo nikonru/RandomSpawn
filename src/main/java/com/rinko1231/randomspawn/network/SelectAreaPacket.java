@@ -1,6 +1,8 @@
-package com.rinko1231.randomspawn;
+package com.rinko1231.randomspawn.network;
 
 import java.util.function.Supplier;
+
+import com.rinko1231.randomspawn.RandomSpawn;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;

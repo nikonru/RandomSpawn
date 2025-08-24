@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.rinko1231.randomspawn.config.RandomSpawnConfig;
 import com.rinko1231.randomspawn.config.RandomSpawnConfig.AreaConfig;
+import com.rinko1231.randomspawn.network.Network;
+import com.rinko1231.randomspawn.network.OpenGuiPacket;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
